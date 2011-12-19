@@ -45,7 +45,7 @@
 
 	_.extend($ma, $bb.Events, {
 
-		tmpls: {}, views: {}, models: {},
+		tmpls: {}, views: {}, models: {}, colls: {},
 		controllers: [],
 
 		// turn on/off page loading message.
@@ -79,20 +79,32 @@
 		},
 
 		initializeApp: function() {
+			//create classes
+			var ma = this;
+			_.each(['model', 'view', 'coll'], function(m){
+				ma.trigger('new:'+m+'.Base', ma[m+'s'].Base);
+			});
 			$('#app-init').remove();
 			_.each(this.controllers, function(ccls){ new ccls();});
 			if($bb.history != undefined){$bb.history.start();}
 			else{this.log('no route defined!!')}
 		}
 	});
-
-	$ma.Model = $bb.Model.extend({
-		
+	_.each(['model', 'view', 'coll'], function(m){
+		$ma[m] = function(name, base, ps, cps){
+			this.bind('new:'+m+'.'+base, function(cls){
+				if(typeof(ps) == 'function'){ var newCls = ps(cls); }
+				else{ var newCls = cls.extend(ps, cps);}
+				
+				this[m+'s'][name] = newCls;
+				this.trigger('new:'+m+'.'+name, newCls);
+			}, this);
+		}
 	});
 
-	$ma.View = $bb.View.extend({
-		
-	});
+	$ma.models.Base = $bb.Model.extend({});
+	$ma.colls.Base = $bb.Collection.extend({});
+	$ma.views.Base = $bb.View.extend({});
 
 	// check which scrollTop value should be used by scrolling to 1 immediately at domready
 	// then check what the scroll top is. Android will report 0... others 1

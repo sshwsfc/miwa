@@ -75,7 +75,8 @@ class AppJsHandler(tornado.web.RequestHandler):
 
     def get_code(self, app_path, comp, ext='js'):
         filepath = os.path.join(app_path, '%s.%s' % (comp, ext))
-        self.append_code(file(filepath).read())
+        if os.path.exists(filepath):
+            self.append_code(file(filepath).read())
 
     def get(self):
         self.js = ['(function(){']
