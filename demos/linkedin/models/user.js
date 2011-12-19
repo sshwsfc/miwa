@@ -263,3 +263,29 @@ TLI.Profile = TLI.BaseModel.extend({
         }
     }
 });
+TLI.ProfileDetails = TLI.BaseCollection.extend({
+    model: TLI.ProfileSection,
+    params: {
+        count: 300
+    },
+    url: function() {
+        return this.buildUrl("<%- base %>/li/v1/people/<%- id %>/profile<%- suffix %>", {
+            authToken: this.get("authToken")
+        })
+    },
+    parse: function(a) {
+        return a
+    },
+    group: function() {
+        return [{
+            group: null,
+            groupItems: this.models
+        }]
+    }
+});
+TLI.ProfileSection = TLI.BaseModel.extend({
+    SIMPLE: "pdt1",
+    EXPERIENCE: "pdt2",
+    LIST: "pdt3",
+    BLURB: "pdt4"
+});

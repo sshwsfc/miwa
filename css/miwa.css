@@ -1,0 +1,332 @@
+/* some unsets - more probably needed */
+.ui-mobile, .ui-mobile body { height: 100%; }
+.ui-mobile fieldset, .ui-page { padding: 0; margin: 0; }
+.ui-mobile a img, .ui-mobile fieldset { border: 0; }
+
+/* responsive page widths */
+.ui-mobile-viewport {  margin: 0; overflow-x: visible; -webkit-text-size-adjust: none; -ms-text-size-adjust:none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }
+/* Issue #2066 */
+body.ui-mobile-viewport,
+div.ui-mobile-viewport { overflow-x: hidden; }
+
+/* "page" containers - full-screen views, one should always be in view post-pageload */
+.ui-page { top: 0; left: 0; width: 100%; min-height: 100%; position: absolute; display: none; border: 0; }
+.ui-mobile .ui-page-active { display: block; overflow: visible; }
+
+/* on ios4, setting focus on the page element causes flashing during transitions when there is an outline, so we turn off outlines */
+.ui-page { outline: none; }
+
+/*orientations from js are available */
+@media screen and (orientation: portrait){
+.ui-mobile, .ui-mobile .ui-page { min-height: 420px; }
+}
+@media screen and (orientation: landscape){
+.ui-mobile, .ui-mobile .ui-page { min-height: 300px; }
+}
+
+/* native overflow scrolling */
+.ui-page.ui-mobile-touch-overflow,
+.ui-mobile-touch-overflow.ui-native-fixed .ui-content {
+	overflow: auto;
+	height: 100%;
+	left: 0;
+	right: 0;
+	-webkit-overflow-scrolling: touch;
+	-moz-overflow-scrolling: touch;
+	-o-overflow-scrolling: touch;
+	-ms-overflow-scrolling: touch;
+	overflow-scrolling: touch;
+}
+.ui-page.ui-mobile-touch-overflow,
+.ui-page.ui-mobile-touch-overflow * {
+	/* some level of transform keeps elements from blinking out of visibility on iOS */
+	-webkit-transform: rotateY(0);
+}
+.ui-page.ui-mobile-pre-transition {
+	display: block;
+}
+.ui-mobile-touch-overflow.ui-native-fixed .ui-content .ui-listview {
+	margin-top: 0;
+}
+.ui-mobile-touch-overflow.ui-native-fixed .ui-content .ui-listview-inset {
+	margin-top: 1em;
+}
+.ui-mobile-touch-overflow.ui-native-fixed .ui-header .ui-btn { 
+	z-index: 10;
+}
+
+/* loading screen */
+.ui-loading .ui-mobile-viewport { overflow: hidden !important; }
+.ui-loading .ui-loader { display: block; }
+.ui-loading .ui-page { overflow: hidden;  }
+.ui-loader { display: none; position: absolute; opacity: .85; z-index: 100; left: 50%; width: 200px; margin-left: -130px; margin-top: -35px; padding: 10px 30px; }
+.ui-loader h1 { font-size: 15px; text-align: center; }
+.ui-loader .ui-icon { position: static; display: block; opacity: .9; margin: 0 auto; width: 35px; height: 35px; background-color: transparent; }
+
+/*fouc*/
+.ui-mobile-rendering > * { visibility: hidden; }
+
+/** tranistion **/
+.spin  {
+	-webkit-transform: rotate(360deg);
+	-webkit-animation-name: spin;
+	-webkit-animation-duration: 1s;
+	-webkit-animation-iteration-count:  infinite;
+	-webkit-animation-timing-function: linear;
+}
+@-webkit-keyframes spin {
+	from {-webkit-transform: rotate(0deg);}
+  	to {-webkit-transform: rotate(360deg);}
+}
+
+/* Transitions from jQtouch (with small modifications): http://www.jqtouch.com/
+Built by David Kaneda and maintained by Jonathan Stark.
+*/
+.in, .out {
+	-webkit-animation-timing-function: ease-in-out;
+	-webkit-animation-duration: 350ms;
+}
+
+
+.slide.out {
+	-webkit-transform: translateX(-100%);
+	-webkit-animation-name: slideouttoleft;
+}
+
+.slide.in {
+	-webkit-transform: translateX(0);
+	-webkit-animation-name: slideinfromright;
+}
+
+.slide.out.reverse {
+	-webkit-transform: translateX(100%);
+	-webkit-animation-name: slideouttoright;
+}
+
+.slide.in.reverse {
+	-webkit-transform: translateX(0);
+	-webkit-animation-name: slideinfromleft;
+}
+
+.slideup.out {
+	-webkit-animation-name: dontmove;
+	z-index: 0;
+}
+
+.slideup.in {
+	-webkit-transform: translateY(0);
+	-webkit-animation-name: slideinfrombottom;
+	z-index: 10;
+}
+
+.slideup.in.reverse {
+	z-index: 0;
+	-webkit-animation-name: dontmove;
+}
+
+.slideup.out.reverse {
+	-webkit-transform: translateY(100%);
+	z-index: 10;
+	-webkit-animation-name: slideouttobottom;
+}
+
+.slidedown.out {
+	-webkit-animation-name: dontmove;
+	z-index: 0;
+}
+
+.slidedown.in {
+	-webkit-transform: translateY(0);
+	-webkit-animation-name: slideinfromtop;
+	z-index: 10;
+}
+
+.slidedown.in.reverse {
+	z-index: 0;
+	-webkit-animation-name: dontmove;
+}
+
+.slidedown.out.reverse {
+	-webkit-transform: translateY(-100%);
+	z-index: 10;
+	-webkit-animation-name: slideouttotop;
+}
+
+@-webkit-keyframes slideinfromright {
+    from { -webkit-transform: translateX(100%); }
+    to { -webkit-transform: translateX(0); }
+}
+
+@-webkit-keyframes slideinfromleft {
+    from { -webkit-transform: translateX(-100%); }
+    to { -webkit-transform: translateX(0); }
+}
+
+@-webkit-keyframes slideouttoleft {
+    from { -webkit-transform: translateX(0); }
+    to { -webkit-transform: translateX(-100%); }
+}
+
+@-webkit-keyframes slideouttoright {
+    from { -webkit-transform: translateX(0); }
+    to { -webkit-transform: translateX(100%); }
+}
+
+@-webkit-keyframes slideinfromtop {
+    from { -webkit-transform: translateY(-100%); }
+    to { -webkit-transform: translateY(0); }
+}
+
+@-webkit-keyframes slideinfrombottom {
+    from { -webkit-transform: translateY(100%); }
+    to { -webkit-transform: translateY(0); }
+}
+
+@-webkit-keyframes slideouttobottom {
+    from { -webkit-transform: translateY(0); }
+    to { -webkit-transform: translateY(100%); }
+}
+
+@-webkit-keyframes slideouttotop {
+    from { -webkit-transform: translateY(0); }
+    to { -webkit-transform: translateY(-100%); }
+}
+@-webkit-keyframes fadein {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@-webkit-keyframes fadeout {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.fade.out {
+	z-index: 0;
+	-webkit-animation-name: fadeout;
+}
+
+.fade.in {
+	opacity: 1;
+	z-index: 10;
+	-webkit-animation-name: fadein;
+}
+
+/* The properties in this rule are only necessary for the 'flip' transition.
+ * We need specify the perspective to create a projection matrix. This will add
+ * some depth as the element flips. The depth number represents the distance of
+ * the viewer from the z-plane. According to the CSS3 spec, 1000 is a moderate
+ * value.
+ */
+.viewport-flip {
+	-webkit-perspective: 1000;
+	position: absolute;
+}
+
+.ui-mobile-viewport-transitioning,
+.ui-mobile-viewport-transitioning .ui-page {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.flip {
+	-webkit-animation-duration: .65s;
+	-webkit-backface-visibility:hidden;
+	-webkit-transform:translateX(0); /* Needed to work around an iOS 3.1 bug that causes listview thumbs to disappear when -webkit-visibility:hidden is used. */
+}
+
+.flip.out {
+	-webkit-transform: rotateY(-180deg) scale(.8);
+	-webkit-animation-name: flipouttoleft;
+}
+
+.flip.in {
+	-webkit-transform: rotateY(0) scale(1);
+	-webkit-animation-name: flipinfromleft;
+}
+
+/* Shake it all about */
+
+.flip.out.reverse {
+	-webkit-transform: rotateY(180deg) scale(.8);
+	-webkit-animation-name: flipouttoright;
+}
+
+.flip.in.reverse {
+	-webkit-transform: rotateY(0) scale(1);
+	-webkit-animation-name: flipinfromright;
+}
+
+@-webkit-keyframes flipinfromright {
+    from { -webkit-transform: rotateY(-180deg) scale(.8); }
+    to { -webkit-transform: rotateY(0) scale(1); }
+}
+
+@-webkit-keyframes flipinfromleft {
+    from { -webkit-transform: rotateY(180deg) scale(.8); }
+    to { -webkit-transform: rotateY(0) scale(1); }
+}
+
+@-webkit-keyframes flipouttoleft {
+    from { -webkit-transform: rotateY(0) scale(1); }
+    to { -webkit-transform: rotateY(-180deg) scale(.8); }
+}
+
+@-webkit-keyframes flipouttoright {
+    from { -webkit-transform: rotateY(0) scale(1); }
+    to { -webkit-transform: rotateY(180deg) scale(.8); }
+}
+
+
+/* Hackish, but reliable. */
+
+@-webkit-keyframes dontmove {
+    from { opacity: 1; }
+    to { opacity: 1; }
+}
+
+.pop {
+	-webkit-transform-origin: 50% 50%;
+}
+
+.pop.in {
+	-webkit-transform: scale(1);
+    opacity: 1;
+	-webkit-animation-name: popin;
+	z-index: 10;
+}
+
+.pop.in.reverse {
+	z-index: 0;
+	-webkit-animation-name: dontmove;
+}
+
+.pop.out.reverse {
+	-webkit-transform: scale(.2);
+	opacity: 0;
+	-webkit-animation-name: popout;
+	z-index: 10;
+}
+
+@-webkit-keyframes popin {
+    from {
+        -webkit-transform: scale(.2);
+        opacity: 0;
+    }
+    to {
+        -webkit-transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes popout {
+    from {
+        -webkit-transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        -webkit-transform: scale(.2);
+        opacity: 0;
+    }
+}

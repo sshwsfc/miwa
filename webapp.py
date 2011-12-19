@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os,sys
+import os,sys,re
 import os.path
 import logging
 import codecs
@@ -14,20 +14,9 @@ PROJECT_ROOT = os.path.realpath(os.path.dirname(__file__))
 define('port', type=int, default=8000)
 define('root', type=str, default=PROJECT_ROOT)
 
-class HtmlHandler(tornado.web.RequestHandler):
-    
-    def get_html_string(self, path, context):
-        try:
-            return self.render_string(path+ ".html", **context)
-        except Exception, err:
-            logging.error(err)
-            raise tornado.web.HTTPError(404)
-    
-    def get(self, path='index'):
-        if path == '':
-            path = 'index'
-        path  = path.replace('.', '/')
-                    
+class AppPageHandler(tornado.web.RequestHandler):
+        
+    def get(self):                    
         settings = self.application.settings
 
         header_scripts = """
@@ -35,47 +24,94 @@ class HtmlHandler(tornado.web.RequestHandler):
         <script src="libs/underscore.js"></script>
         <script src="libs/backbone.js"></script>
         <script src="libs/backbone-localstorage.js"></script>
+        <script src="miwa.js"></script>
         <script src="app.js"></script>
         """
 
         context = {'settings':settings, 'header_scripts': header_scripts, \
             'debug':settings.get('debug'), 'lang': self.locale.code}
         
-        self.finish(self.get_html_string(path, context))
+        self.finish(self.render_string("app.html", **context))
 
 class AppJsHandler(tornado.web.RequestHandler):
     
-    app_dirs = ('models', 'collection', 'templates', 'views', 'controllers')
+    comps = ('models', 'collections', 'templates', 'views', 'controllers', 'utils')
+    tmpl_re = re.compile(r'<\!---tmpl:(\S+)-->')
 
     def append_code(self, code):
         self.js.append(code)
 
-    def get_templates_content(self, d):
-        self.append_code('window.TPS = {};')
+    def get_templates_content(self, app_path, comp='templates'):
+        tmpls = {}
+        root = os.path.join(app_path, comp)
+        if os.path.isdir(root):
+            for fp in os.listdir(root):
+                filepath = os.path.join(root, fp)
+                if fp.endswith('.html'):
+                    tmpls[fp.split('.')[0]] = file(filepath).read()
+        
+        tmpl_file = '%s.html' % root
+        if os.path.exists(tmpl_file):
+            tf = file(tmpl_file)
+            content = tf.read()
+            cache_tmpl = ''
+            cache_key = ''
+            end_pos = 0
 
-        root = os.path.join(self.application.settings.get('app_root'), d)
-        for fp in os.listdir(root):
-            filepath = os.path.join(root, fp)
-            if fp.endswith('.html'):
-                tmpl = file(filepath).read()
-                tmpl = tmpl.replace("'", "\\'").replace('\r', "").replace('\n', "")
-                self.append_code("window.TPS.%s = _.template('%s');" % (fp.split('.')[0], tmpl))
+            for match in self.tmpl_re.finditer(content):
+                cache_tmpl = content[end_pos:match.start()]
+                if cache_tmpl and cache_key:  tmpls[cache_key] = cache_tmpl
+                cache_key = match.groups()[0]
+                end_pos = match.end()
 
-    def get_code(self, d, ext='js'):
-        root = os.path.join(self.application.settings.get('app_root'), d)
-        for fp in os.listdir(root):
-            filepath = os.path.join(root, fp)
-            if fp.endswith('.%s' % ext):
-                self.append_code(file(filepath).read())
+            cache_tmpl = content[end_pos:]
+            if cache_tmpl and cache_key:  tmpls[cache_key] = cache_tmpl
+
+            tf.close()
+            
+        for key, tmpl in tmpls.items():
+            tmpl = tmpl.replace("'", "\\'").replace('\r', "").replace('\n', "")
+            self.append_code("$ma.tmpls.%s = _.template('%s');" % (key, tmpl))
+
+    def get_code(self, app_path, comp, ext='js'):
+        filepath = os.path.join(app_path, '%s.%s' % (comp, ext))
+        self.append_code(file(filepath).read())
 
     def get(self):
-        self.js = ['$(function(){']
-        for d in self.app_dirs:
-            (hasattr(self, 'get_%s_content' % d) and getattr(self, 'get_%s_content' % d) or self.get_code)(d)
-        self.append_code('window.App = new AppView;});')
+        self.js = ['(function(){']
+
+        root = os.path.join(self.application.settings.get('app_root'), 'js')
+        for app in os.listdir(root):
+            app_path = os.path.join(root, app)
+            for comp in self.comps:
+                (hasattr(self, 'get_%s_content' % comp) and getattr(self, 'get_%s_content' % comp) or self.get_code)(app_path, comp)
+
+        self.append_code('})();')
 
         self.set_header("Content-Type", "text/javascript; charset=UTF-8")
         self.finish('\n'.join(self.js))
+
+class MiwaJsHandler(tornado.web.RequestHandler):
+    
+    miwa_packages = ('core', 'cache', 'ui', 'page', 'support')
+    src_root = os.path.join(PROJECT_ROOT, "js")
+
+    def get(self):
+        self.js = []
+        for p in self.miwa_packages:
+            self.js.append(file(os.path.join(self.src_root, 'miwa.%s.js' % p)).read())
+
+        self.set_header("Content-Type", "text/javascript; charset=UTF-8")
+        self.finish('\n'.join(self.js))
+
+class MiwaCssHandler(tornado.web.RequestHandler):
+    
+    src_root = os.path.join(PROJECT_ROOT, "css")
+
+    def get(self):
+        css = file(os.path.join(self.src_root, 'miwa.css')).read()
+        self.set_header("Content-Type", "text/css; charset=UTF-8")
+        self.finish(css)
 
 def main():
     root = options.root
@@ -84,14 +120,19 @@ def main():
 
     app_settings = {
         "app_root": root,
-        "template_path": os.path.join(root, "htmls"),
+        "template_path": root,
         "debug": True,
         "autoescape":None,
+        "static_path": os.path.join(root, "static"),
+        "static_url_prefix": "/static/",
     }
     handlers = [
+        (r"/$", AppPageHandler),
         (r"/app.js", AppJsHandler),
-        (r"/(.*).html", HtmlHandler),
+        (r"/miwa.js", MiwaJsHandler),
+        (r"/miwa.css", MiwaCssHandler),
         (r"/libs/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(PROJECT_ROOT, "libs")}),
+        (r"/js/(.*)", tornado.web.StaticFileHandler, {"path": os.path.join(PROJECT_ROOT, "js")}),
     ]
     application = tornado.web.Application(handlers, **app_settings)
 
