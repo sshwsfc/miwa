@@ -36,6 +36,7 @@ class AppPageHandler(tornado.web.RequestHandler):
 class AppJsHandler(tornado.web.RequestHandler):
     
     comps = ('models', 'collections', 'templates', 'views', 'controllers', 'utils')
+    models_method = {'models': 'model', 'collections': 'coll', 'views': 'view'}
     tmpl_re = re.compile(r'<\!---tmpl:(\S+)-->')
 
     def append_code(self, code):
@@ -76,7 +77,11 @@ class AppJsHandler(tornado.web.RequestHandler):
     def get_code(self, app_path, comp, ext='js'):
         filepath = os.path.join(app_path, '%s.%s' % (comp, ext))
         if os.path.exists(filepath):
-            self.append_code(file(filepath).read())
+            content = file(filepath).read()
+            if self.models_method.has_key(comp):
+                self.append_code('$ma.%s(function(){ return {\n%s\n}})' % (self.models_method[comp], content))
+            else:
+                self.append_code(content)
 
     def get(self):
         self.js = ['(function(){']

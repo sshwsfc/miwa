@@ -81,7 +81,27 @@
 		initializeApp: function() {
 			//create classes
 			var ma = this;
-			_.each(['model', 'view', 'coll'], function(m){
+			_.each(['model', 'coll', 'view'], function(m){
+				for (var i = ma[m+'_cbs'].length - 1; i >= 0; i--) {
+					var models = ma[m+'_cbs'][i](ma);
+					for(key in models){
+						key.replace(/\s/g, '');
+						if(key.indexOf('$')>0){
+							var name=key.split('$')[0], base=key.split('$')[1];}
+						else{var name=key, base='Base';}
+
+						if(name != 'Base'){
+							var ps = models[key];
+							ma.bind('new:'+m+'.'+base, (function(name, ps){return function(cls){
+								if(typeof(ps) == 'function'){ var newCls = ps(cls); }
+								else{ var newCls = cls.extend(ps);}
+								
+								ma[m+'s'][name] = newCls;
+								ma.trigger('new:'+m+'.'+name, newCls);
+							}})(name, ps), ma);
+						}
+					}
+				};
 				ma.trigger('new:'+m+'.Base', ma[m+'s'].Base);
 			});
 			$('#app-init').remove();
@@ -90,16 +110,9 @@
 			else{this.log('no route defined!!')}
 		}
 	});
-	_.each(['model', 'view', 'coll'], function(m){
-		$ma[m] = function(name, base, ps, cps){
-			this.bind('new:'+m+'.'+base, function(cls){
-				if(typeof(ps) == 'function'){ var newCls = ps(cls); }
-				else{ var newCls = cls.extend(ps, cps);}
-				
-				this[m+'s'][name] = newCls;
-				this.trigger('new:'+m+'.'+name, newCls);
-			}, this);
-		}
+	_.each(['model', 'coll', 'view'], function(m){
+		$ma[m+'_cbs'] = [];
+		$ma[m] = function(callback){$ma[m+'_cbs'].push(callback);}
 	});
 
 	$ma.models.Base = $bb.Model.extend({});
