@@ -21,9 +21,10 @@ class AppPageHandler(tornado.web.RequestHandler):
 
         header_scripts = """
         <script src="libs/zepto.js"></script>
+        <script src="libs/zepto.windowname.js"></script>
         <script src="libs/underscore.js"></script>
         <script src="libs/backbone.js"></script>
-        <script src="libs/backbone-localstorage.js"></script>
+        <!--script src="libs/backbone-localstorage.js"></script-->
         <script src="miwa.js"></script>
         <script src="app.js"></script>
         """
@@ -72,7 +73,7 @@ class AppJsHandler(tornado.web.RequestHandler):
             
         for key, tmpl in tmpls.items():
             tmpl = tmpl.replace("'", "\\'").replace('\r', "").replace('\n', "")
-            self.append_code("$ma.tmpls.%s = _.template('%s');" % (key, tmpl))
+            self.append_code("$tmpls.%s = _.template('%s');" % (key, tmpl))
 
     def get_code(self, app_path, comp, ext='js'):
         filepath = os.path.join(app_path, '%s.%s' % (comp, ext))

@@ -31,8 +31,8 @@
 	// initialize underscore
 	_.templateSettings = {
         evaluate: /\{%([\s\S]+?)%\}/g,
-        interpolate: /\{\{([\s\S]+?)\}\}/g,
-	    escape      : /\{-([\s\S]+?)\}\}>/g
+        interpolate: /\$\{([\s\S]+?)\}/g,
+	    escape      : /#\{([\s\S]+?)\}/g
 	};
 
 	var	$html = $( "html" ),
@@ -42,10 +42,11 @@
 	$( window.document ).trigger( "miwainit" );
 
 	$html.addClass( "ui-mobile ui-mobile-rendering" );
+	//App mvc models
+	root.$tmpls= {}, root.$views= {}, root.$models= {}, root.$colls= {};
 
 	_.extend($ma, $bb.Events, {
 
-		tmpls: {}, views: {}, models: {}, colls: {},
 		controllers: [],
 
 		// turn on/off page loading message.
@@ -96,13 +97,13 @@
 								if(typeof(ps) == 'function'){ var newCls = ps(cls); }
 								else{ var newCls = cls.extend(ps);}
 								
-								ma[m+'s'][name] = newCls;
+								root['$'+m+'s'][name] = newCls;
 								ma.trigger('new:'+m+'.'+name, newCls);
 							}})(name, ps), ma);
 						}
 					}
 				};
-				ma.trigger('new:'+m+'.Base', ma[m+'s'].Base);
+				ma.trigger('new:'+m+'.Base', root['$'+m+'s'].Base);
 			});
 			$('#app-init').remove();
 			_.each(this.controllers, function(ccls){ new ccls();});
@@ -115,9 +116,9 @@
 		$ma[m] = function(callback){$ma[m+'_cbs'].push(callback);}
 	});
 
-	$ma.models.Base = $bb.Model.extend({});
-	$ma.colls.Base = $bb.Collection.extend({});
-	$ma.views.Base = $bb.View.extend({});
+	$models.Base = $bb.Model.extend({});
+	$colls.Base = $bb.Collection.extend({});
+	$views.Base = $bb.View.extend({});
 
 	// check which scrollTop value should be used by scrolling to 1 immediately at domready
 	// then check what the scroll top is. Android will report 0... others 1
