@@ -105,6 +105,7 @@
 				};
 				ma.trigger('new:'+m+'.Base', root['$'+m+'s'].Base);
 			});
+			this.trigger('initialize', this);
 			$('#app-init').remove();
 			_.each(this.controllers, function(ccls){ new ccls();});
 			if($bb.history != undefined){$bb.history.start();}

@@ -1,6 +1,43 @@
 // ...
 (function(){
 
+  Backbone.Page = function(options) {
+    this.cid = _.uniqueId('page');
+    this._configure(options || {});
+    if (options.routes) this.routes = options.routes;
+    this._bindRoutes();
+    this.initialize.apply(this, arguments);
+  };
+
+  _.extend(Backbone.Page.prototype, Backbone.Events, Backbone.Router, {
+  	views: {},
+	rended : false,
+
+	make : function() {
+		var el = document.createElement('div');
+		var $el = $(el);
+		$el.addClass('ui-page');
+		attributes['id'] = this.cid;
+		this.$el = $el;
+		return el;
+	},
+
+	render_views: function(){
+		
+	},
+	
+	show: function(fromPage){
+		if(!this.rended){
+			this.make();
+			this.render_views();
+    		this.delegateEvents();
+			this.rended = true;
+		}
+
+
+	},
+  });
+
 var Page = $bb.View.extend({
 
 	tagName: 'div',
@@ -125,8 +162,13 @@ _.extend($ma.pm, $bb.Events, {
 		len: function(){return this._stack.length;}
 	},
 
+	initialize: function(){
+	},
+
 	page: function(ps, cps){
-		this.pages[ps.type] = Page.extend(ps, cps);
+		var page_cls = Page.extend(ps, cps);
+		var page = new page_cls;
+		this.pages[page.cid] = page;
 	},
 
 	to : function(page, options){
@@ -242,5 +284,6 @@ _.extend($ma.pm, $bb.Events, {
 });
 
 $ma.page = function(){$ma.pm.page.apply($ma.pm, arguments)};
+$ma.bind('initialize', _.bind($ma.pm.initialize, $ma.pm));
 
 })(this);

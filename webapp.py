@@ -87,7 +87,7 @@ class AppJsHandler(tornado.web.RequestHandler):
     def get(self):
         self.js = ['(function(){']
 
-        root = os.path.join(self.application.settings.get('app_root'), 'js')
+        root = os.path.join(self.application.settings.get('app_root'), 'src')
         for app in os.listdir(root):
             app_path = os.path.join(root, app)
             for comp in self.comps:
