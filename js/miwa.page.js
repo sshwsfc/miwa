@@ -186,7 +186,7 @@ _.extend($ma.pm, $bb.Events, {
 		fromPage = options.fromPage || this.activePage;
 
 		// Let listeners know we're about to change the current page.
-		this.trigger('pagebeforechange', toPage, fromPage, options)
+		this.trigger('pagebeforechange', toPage, fromPage, options);
 
 		// If the default behavior is prevented, stop here!
 		if( options.prevented ){return;}

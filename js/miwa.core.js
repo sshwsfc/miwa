@@ -95,7 +95,15 @@
 							var ps = models[key];
 							ma.bind('new:'+m+'.'+base, (function(name, ps){return function(cls){
 								if(typeof(ps) == 'function'){ var newCls = ps(cls); }
-								else{ var newCls = cls.extend(ps);}
+								else{ 
+									var clsPs = {};
+									for(key in ps){
+										if(key.indexOf('$') == 0){
+											cls[key.substr(0)] = ps[key];
+											delete ps[key];
+										}
+									}
+									var newCls = cls.extend(ps, clsPs);}
 								
 								root['$'+m+'s'][name] = newCls;
 								ma.trigger('new:'+m+'.'+name, newCls);
