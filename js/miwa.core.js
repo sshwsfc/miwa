@@ -99,10 +99,11 @@
 									var clsPs = {};
 									for(key in ps){
 										if(key.indexOf('$') == 0){
-											cls[key.substr(0)] = ps[key];
+											clsPs[key.substr(1)] = ps[key];
 											delete ps[key];
 										}
 									}
+									ps['_sup'] = cls.prototype;
 									var newCls = cls.extend(ps, clsPs);}
 								
 								root['$'+m+'s'][name] = newCls;
@@ -115,7 +116,7 @@
 			});
 			this.trigger('initialize', this);
 			$('#app-init').remove();
-			_.each(this.controllers, function(ccls){ new ccls();});
+
 			if($bb.history != undefined){$bb.history.start();}
 			else{this.log('no route defined!!')}
 		}
@@ -127,7 +128,10 @@
 
 	$models.Base = $bb.Model.extend({});
 	$colls.Base = $bb.Collection.extend({});
-	$views.Base = $bb.View.extend({});
+	$views.Base = $bb.View.extend({
+		show: function(){ $(this.el).show(); },
+		hide: function(){ $(this.el).hide(); }
+	});
 
 	// check which scrollTop value should be used by scrolling to 1 immediately at domready
 	// then check what the scroll top is. Android will report 0... others 1

@@ -1,101 +1,80 @@
 // ...
 (function(){
 
-  Backbone.Page = function(options) {
-    this.cid = _.uniqueId('page');
-    this._configure(options || {});
-    if (options.routes) this.routes = options.routes;
-    this._bindRoutes();
-    this.initialize.apply(this, arguments);
-  };
+$ma.view(function(){ return {
+	Page: {
 
-  _.extend(Backbone.Page.prototype, Backbone.Events, Backbone.Router, {
-  	views: {},
-	rended : false,
+		tagName: 'div',
+		pageName: '',
+		rended_views : false,
+		transition : 'slide',
 
-	make : function() {
-		var el = document.createElement('div');
-		var $el = $(el);
-		$el.addClass('ui-page');
-		attributes['id'] = this.cid;
-		this.$el = $el;
-		return el;
-	},
+		_configure : function(options) {
+			$bb.View.prototype._configure.call(this, options);
+			this.pageId = options['pageId'];
+		},
 
-	render_views: function(){
-		
-	},
-	
-	show: function(fromPage){
-		if(!this.rended){
-			this.make();
-			this.render_views();
-    		this.delegateEvents();
-			this.rended = true;
+		initialize: function(options) {
+			this.bind('beforeshow', this.show_views, this);
+			this.bind('show', function(){
+				if(this.lastScroll){
+					var lastScroll = this.lastScroll;
+					setTimeout(function() {
+						window.scrollTo( 0, lastScroll );
+					}, 20 );
+				}
+				$("html").removeClass("ui-mobile-rendering");
+			}, this);
+			this.bind('beforehide', function(){ this.lastScroll = $('body')[0].scrollTop;}, this);
+		},
+
+		show_views: function(){},
+
+		make : function(tagName, attributes, content) {
+			var el = document.createElement(tagName);
+			var $el = $(el);
+			$el.addClass('ui-page');
+			attributes['id'] = this.page_id;
+			if (attributes) $el.attr(attributes);
+			if (content) $el.html(content);
+
+			//layout views
+			var views = this.make_views();
+			_.each(views, function(v){
+				$el.append(v.el);
+			});
+
+			this.views = views;
+			this.$el = $el;
+			return el;
 		}
-
-
-	},
-  });
-
-var Page = $bb.View.extend({
-
-	tagName: 'div',
-	pageName: '',
-	rended : false,
-	transition : 'slide',
-
-	_configure : function(options) {
-		$bb.View.prototype._configure.call(this, options);
-		this.make_page_id(options);
-	},
-
-	make_page_id: function(options){
-		this.page_id = this.type;
-	},
-
-	initialize: function(options) {
-		this.bind('beforeshow', this.render_page, this);
-		this.bind('show', function(){
-			if(this.lastScroll){
-				var lastScroll = this.lastScroll;
-				setTimeout(function() {
-					window.scrollTo( 0, lastScroll );
-				}, 20 );
-			}
-			$("html").removeClass("ui-mobile-rendering");
-		}, this);
-		this.bind('beforehide', function(){ this.lastScroll = $('body')[0].scrollTop;}, this);
-	},
-
-	render_page: function(fromPage){
-		if(!this.rended){
-			this.render();
-			this.rended = true;
-		}
-	},
-
-	make : function(tagName, attributes, content) {
-		var el = document.createElement(tagName);
-		var $el = $(el);
-		$el.addClass('ui-page');
-		attributes['id'] = this.page_id;
-		if (attributes) $el.attr(attributes);
-		if (content) $el.html(content);
-		this.$el = $el;
-		return el;
-	},
-
-}, {
-	gen_page: function($pm, hash, options){
-		if($pm.current_pages[hash] == undefined){
-			var page = new this(options);
-			$pm.container.append(page.el);
-			$pm.current_pages[hash] = page;
-		}
-		return $pm.current_pages[hash];
 	}
-});
+}});
+
+var PageRoute = $bb.Router.extend({
+	initialize : function(options){
+		this.page = options.page;
+	},
+	route : function(route, name, callback) {
+		Backbone.history || (Backbone.history = new Backbone.History);
+		if (!_.isRegExp(route)) route = this._routeToRegExp(route);
+		Backbone.history.route(route, _.bind(function(fragment) {
+			var args = this._extractParameters(route, fragment);
+			var pageId = (typeof(this.page.pageId) == 'function') ? this.page.pageId.apply(this.page, args) : this.page.pageId;
+			
+			var page = $ma.pm.current_pages[pageId];
+			if(page == undefined){
+				page = new this.page({'pageId': pageId});
+				$ma.pm.container.append(page.el);
+				$ma.pm.current_pages[pageId] = page;
+			}
+
+			page[name].apply(page, args);
+
+			$ma.pm.to(page);
+		}, this));
+    }
+})
 
 //default non-animation transition handler
 var noneTransitionHandler = function( name, reverse, toPage, fromPage, done ) {
@@ -103,7 +82,6 @@ var noneTransitionHandler = function( name, reverse, toPage, fromPage, done ) {
 		fromPage.$el.removeClass( "ui-page-active active-page" );
 	}
 	toPage.$el.addClass( "ui-page-active active-page" );
-
 	return done();
 };
 
@@ -118,7 +96,6 @@ var css3TransitionHandler = function( name, reverse, to, from, done ) {
 			if ( $from && $from[ 0 ] !== $to[ 0 ] ) {
 				$from.removeClass( activePageClass );
 			}
-
 			$to.parent().removeClass( viewportClass );
 			done();
 		};
@@ -163,15 +140,17 @@ _.extend($ma.pm, $bb.Events, {
 	},
 
 	initialize: function(){
+		_.each(_.values($views), function(v){
+			if(v['pageId'] && v['routes']){
+				new PageRoute({
+					page: v,
+					routes: v.routes
+				});
+			}
+		});
 	},
 
-	page: function(ps, cps){
-		var page_cls = Page.extend(ps, cps);
-		var page = new page_cls;
-		this.pages[page.cid] = page;
-	},
-
-	to : function(page, options){
+	to : function(toPage, options){
 
 		if( this.isTransitioning ) {
 			this.transitionQueue.unshift( arguments );
@@ -179,11 +158,9 @@ _.extend($ma.pm, $bb.Events, {
 		}
 		options = options || {};
 
-		var hash = window.location.hash;
-		toPage = this.pages[page].gen_page.call(this.pages[page], this, hash, options)
-
 		// Make sure we have a fromPage.
 		fromPage = options.fromPage || this.activePage;
+		if(toPage == fromPage) return;
 
 		// Let listeners know we're about to change the current page.
 		this.trigger('pagebeforechange', toPage, fromPage, options);
@@ -197,10 +174,10 @@ _.extend($ma.pm, $bb.Events, {
 		// internal state and then trigger a transition to the page.
 		var initialPage = this.history.len() === 0;
 
-    historyDir = false;
-    if (window.location.hash === this.history.peek()) {
-        this.history.pop(); historyDir = true
-    } else this.history.push(window.location.hash);
+	    historyDir = false;
+	    if (toPage.pageId === this.history.peek()) {
+	        this.history.pop(); historyDir = true;
+	    } else this.history.push(toPage.pageId);
     
 
 		// Kill the keyboard.
@@ -283,7 +260,6 @@ _.extend($ma.pm, $bb.Events, {
 	},
 });
 
-$ma.page = function(){$ma.pm.page.apply($ma.pm, arguments)};
 $ma.bind('initialize', _.bind($ma.pm.initialize, $ma.pm));
 
 })(this);
