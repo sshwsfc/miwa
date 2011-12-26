@@ -36,8 +36,8 @@ class AppPageHandler(tornado.web.RequestHandler):
 
 class AppJsHandler(tornado.web.RequestHandler):
     
-    comps = ('models', 'collections', 'templates', 'views', 'controllers', 'utils')
-    models_method = {'models': 'model', 'collections': 'coll', 'views': 'view'}
+    comps = ('models', 'collections', 'templates', 'views', 'pages')
+    models_method = {'models': 'model', 'collections': 'coll', 'views': 'view', 'pages': 'view'}
     tmpl_re = re.compile(r'<\!---tmpl:(\S+)-->')
 
     def append_code(self, code):
@@ -90,10 +90,12 @@ class AppJsHandler(tornado.web.RequestHandler):
         root = os.path.join(self.application.settings.get('app_root'), 'src')
         for app in os.listdir(root):
             app_path = os.path.join(root, app)
-            for comp in self.comps:
-                (hasattr(self, 'get_%s_content' % comp) and getattr(self, 'get_%s_content' % comp) or self.get_code)(app_path, comp)
+            for comp_file in os.listdir(app_path):
+                if os.path.isfile(os.path.join(app_path, comp_file)):
+                    comp = comp_file.split('.')[0]
+                    (hasattr(self, 'get_%s_content' % comp) and getattr(self, 'get_%s_content' % comp) or self.get_code)(app_path, comp)
 
-        self.append_code('})();')
+        self.append_code('}).call(this);')
 
         self.set_header("Content-Type", "text/javascript; charset=UTF-8")
         self.finish('\n'.join(self.js))

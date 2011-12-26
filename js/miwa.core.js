@@ -35,6 +35,35 @@
 	    escape      : /#\{([\s\S]+?)\}/g
 	};
 
+	// _.template = function(str, data) {
+	// 	var c  = _.templateSettings;
+	// 	var tmpl = 'var __p=[];' +
+	// 	  'with(obj||{}){__p.push(\'' +
+	// 	  str.replace(/\\/g, '\\\\')
+	// 	     .replace(/'/g, "\\'")
+	// 	     .replace(c.escape, function(match, code) {
+	// 	       return "',_.escape(" + code.replace(/\\'/g, "'") + "),'";
+	// 	     })
+	// 	     .replace(c.interpolate, function(match, code) {
+	// 	       return "',_.attr(this, " + code.replace(/\\'/g, "'") + "),'";
+	// 	       var attr = code.replace(/\\'/g, "'");
+	// 	       return "',_.attr(attr) ? attr() : (attr || get(attr)),'";
+	// 	     })
+	// 	     .replace(c.evaluate || null, function(match, code) {
+	// 	       return "');" + code.replace(/\\'/g, "'")
+	// 	                          .replace(/[\r\n\t]/g, ' ') + ";__p.push('";
+	// 	     })
+	// 	     .replace(/\r/g, '\\r')
+	// 	     .replace(/\n/g, '\\n')
+	// 	     .replace(/\t/g, '\\t')
+	// 	     + "');}return __p.join('');";
+	// 	var func = new Function('obj', '_', '$', tmpl);
+	// 	if (data) return func(data, _, $);
+	// 	return function(data) {
+	// 	  return func.call(this, data, _);
+	// 	};
+	// };
+
 	var	$html = $( "html" ),
 		$head = $( "head" ),
 		$window = $( root );
@@ -126,7 +155,22 @@
 		$ma[m] = function(callback){$ma[m+'_cbs'].push(callback);}
 	});
 
-	$models.Base = $bb.Model.extend({});
+	$models.Base = $bb.Model.extend({
+		fields: {},
+		toData: function(){
+			var data = {};
+			var model = this;
+			_.map(this.attributes, function(v,k){
+				if(_.isFunction(model['get_' + k + '_display'])){
+					data[k] = model['get_' + k + '_display'](v);
+				}else{
+					data[k] = model.fields[k] != undefined && _.isFunction(model['f_' + model.fields[k].type || 'char' + '_display']) 
+						? model['f_' + model.fields[k].type || 'char' + '_display'](v) : v;
+				}
+			});
+			return data;
+		}
+	});
 	$colls.Base = $bb.Collection.extend({});
 	$views.Base = $bb.View.extend({
 		show: function(){ $(this.el).show(); },
