@@ -35,35 +35,6 @@
 	    escape      : /#\{([\s\S]+?)\}/g
 	};
 
-	// _.template = function(str, data) {
-	// 	var c  = _.templateSettings;
-	// 	var tmpl = 'var __p=[];' +
-	// 	  'with(obj||{}){__p.push(\'' +
-	// 	  str.replace(/\\/g, '\\\\')
-	// 	     .replace(/'/g, "\\'")
-	// 	     .replace(c.escape, function(match, code) {
-	// 	       return "',_.escape(" + code.replace(/\\'/g, "'") + "),'";
-	// 	     })
-	// 	     .replace(c.interpolate, function(match, code) {
-	// 	       return "',_.attr(this, " + code.replace(/\\'/g, "'") + "),'";
-	// 	       var attr = code.replace(/\\'/g, "'");
-	// 	       return "',_.attr(attr) ? attr() : (attr || get(attr)),'";
-	// 	     })
-	// 	     .replace(c.evaluate || null, function(match, code) {
-	// 	       return "');" + code.replace(/\\'/g, "'")
-	// 	                          .replace(/[\r\n\t]/g, ' ') + ";__p.push('";
-	// 	     })
-	// 	     .replace(/\r/g, '\\r')
-	// 	     .replace(/\n/g, '\\n')
-	// 	     .replace(/\t/g, '\\t')
-	// 	     + "');}return __p.join('');";
-	// 	var func = new Function('obj', '_', '$', tmpl);
-	// 	if (data) return func(data, _, $);
-	// 	return function(data) {
-	// 	  return func.call(this, data, _);
-	// 	};
-	// };
-
 	var	$html = $( "html" ),
 		$head = $( "head" ),
 		$window = $( root );
